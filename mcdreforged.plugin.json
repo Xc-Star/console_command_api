@@ -1,0 +1,18 @@
+{
+	"id": "console_command_api",
+	"version": "1.0.0",
+	"name": "Console Command API",
+	"description": {
+		"en_us": "Execute console commands via HTTP API and get responses",
+		"zh_cn": "通过 HTTP API 执行控制台命令并获取响应"
+	},
+	"author": [
+		"Xc_Star"
+	],
+	"dependencies": {
+		"mcdreforged": ">=2.0.0"
+	},
+	"resources": [
+		"lang"
+	]
+}
