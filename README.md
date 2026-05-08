@@ -1,5 +1,7 @@
 # Console Command API
 
+[English](./README.md) | [简体中文](./README.zh_cn.md)
+
 Console Command API is an MCDReforged plugin that exposes a small HTTP API for executing commands and reading their output.
 
 It supports both command paths:
@@ -14,7 +16,6 @@ It supports both command paths:
 - Return captured command output in the HTTP response
 - Bearer token authentication
 - Simple health check endpoint
-- Bilingual plugin messages through MCDR language resources
 
 ## Requirements
 

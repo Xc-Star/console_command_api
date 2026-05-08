@@ -1,5 +1,7 @@
 # Console Command API
 
+[English](./README.md) | [简体中文](./README.zh_cn.md)
+
 Console Command API 是一个 MCDReforged 插件，用于通过 HTTP API 执行命令并获取输出结果。
 
 它同时支持两类命令：
@@ -14,7 +16,6 @@ Console Command API 是一个 MCDReforged 插件，用于通过 HTTP API 执行�
 - 在 HTTP 响应中返回捕获到的命令输出
 - 使用 Bearer Token 进行鉴权
 - 提供简单的健康检查接口
-- 保留 MCDR 的多语言资源支持
 
 ## 依赖
 
