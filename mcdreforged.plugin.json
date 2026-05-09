@@ -1,6 +1,6 @@
 {
 	"id": "console_command_api",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"name": "Console Command API",
 	"description": {
 		"en_us": "Execute console commands via HTTP API and get responses",

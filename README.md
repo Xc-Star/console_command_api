@@ -21,9 +21,9 @@ It supports both command paths:
 
 - Python environment compatible with your MCDR installation
 - `mcdreforged>=2.0.0`
-- `fastapi>=0.100.0`
-- `uvicorn>=0.20.0`
-- `pydantic>=2.0.0`
+- `fastapi`
+- `uvicorn`
+- `pydantic`
 
 ## Configuration
 

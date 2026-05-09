@@ -21,9 +21,9 @@ Console Command API 是一个 MCDReforged 插件，用于通过 HTTP API 执行�
 
 - 与当前 MCDR 运行环境兼容的 Python
 - `mcdreforged>=2.0.0`
-- `fastapi>=0.100.0`
-- `uvicorn>=0.20.0`
-- `pydantic>=2.0.0`
+- `fastapi`
+- `uvicorn`
+- `pydantic`
 
 ## 配置
 
