@@ -1,3 +1,9 @@
 console_command_api:
-  server_started: "MCDR command HTTP server started: http://{0}:{1}"
-  server_stopped: "MCDR command HTTP server stopped"
+  client_started: "WS Client started: {0}, server_name: {1}"
+  client_stopped: "WS Client stopped"
+  connected: "Connected to WS Server"
+  reconnecting: "Reconnecting to WS Server..."
+  connection_failed: "Failed to connect to WS Server: {0}"
+  disconnected: "Disconnected from WS Server"
+  error_no_token: "Token is not configured! Please set token in config."
+  error_websockets_not_installed: "websockets library not installed! Please run: pip install websockets"

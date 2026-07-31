@@ -2,133 +2,149 @@
 
 [English](./README.md) | [简体中文](./README.zh_cn.md)
 
-Console Command API is an MCDReforged plugin that exposes a small HTTP API for executing commands and reading their output.
-
-It supports both command paths:
-
-- Commands starting with `!!` are treated as MCDR commands
-- Commands without `!!` are treated as Minecraft server console commands
+Console Command API is an MCDReforged plugin that provides a WebSocket API for executing commands and retrieving their output. Multiple MCDR servers can connect to a single central WS Server, enabling unified command execution and **output retrieval**.
 
 ## Features
 
-- Execute MCDR commands over HTTP
-- Execute Minecraft server console commands over HTTP
-- Return captured command output in the HTTP response
+- Execute MCDR commands (starting with `!!`) over WebSocket
+- Execute Minecraft server console commands over WebSocket
+- Return structured command output in responses
 - Bearer token authentication
-- Simple health check endpoint
+- Support multiple MCDR servers via unique `server_name` identifier
+- Auto-reconnection on connection loss
+- Command serialization to prevent mixed output
 
-## Requirements
+## Migration from v1
+
+### What's New in v2
+
+| Feature | v1 | v2 |
+|---------|----|----|
+| Protocol | HTTP | WebSocket |
+| Reconnection | Manual restart required | Automatic reconnection |
+| Architecture | Standalone plugin | Plugin + centralized WS Server |
+
+### Which Version to Choose
+
+- v2 is designed for servers with multiple sub-servers.
+- With many sub-servers, v1 would consume many ports and be hard to manage.
+- v2 centralizes multi-server communication through [cca_client](https://github.com/Xc-Star/cca_client) for unified routing.
+- For single-server setups, v1 is recommended - simpler and easier to use.
+- Of course, v1 can also work with multiple servers.
+
+### Breaking Changes
+
+- **No longer standalone**: v2 requires [cca_client](https://github.com/Xc-Star/cca_client)
+- **Configuration format changed**: `config.json` structure has been updated
+- **Token required**: Plugin and cca_client must share the same token
+
+### Upgrade Steps
+
+1. Install and start [cca_client](https://github.com/Xc-Star/cca_client)
+2. Copy the generated token from cca_client console, or go to
+3. Update plugin `config.json` with the token and cca_client address
+4. Remove any v1 configurations or dependencies
+
+## Installation
+
+### Prerequisites
 
 - Python environment compatible with your MCDR installation
 - `mcdreforged>=2.0.0`
-- `fastapi`
-- `uvicorn`
-- `pydantic`
+- `websockets>=12.0`
+
+### Recommended Method
+
+1. Use the installation method from the MCDR plugin website:
+2. Run `!!MCDR plugin install console_command_api` in MCDR
+3. Then run `!!MCDR plugin load console_command_api` to load the plugin and generate the config file
+
+### Manual Installation
+
+1. Go to the plugin's [GitHub](https://github.com/Xc-Star/console_command_api) page
+2. Download your desired version from Releases
+3. Place the plugin in MCDR's plugins directory
+4. For v2, run `pip install websockets`. For v1, run `pip install fastapi uvicorn pydantic`
 
 ## Configuration
 
-The plugin will generate its config automatically on first load.
+### config.json
 
-Current config fields:
+The plugin auto-generates this file on first load.
 
 ```json
 {
-  "token": "",
+  "token": "your-shared-token",
   "timeout": 5.0,
   "idle_timeout": 0.2,
-  "host": "0.0.0.0",
-  "port": 8000
+  "ws_url": "ws://127.0.0.1:8001/ws",
+  "server_name": "default",
+  "auto_reconnect": true,
+  "reconnect_interval": 5.0
 }
 ```
 
-### Fields
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `token` | string | (empty) | Bearer token. **Must match WS Server config.** |
+| `timeout` | float | 5.0 | Max seconds to wait for command output. |
+| `idle_timeout` | float | 0.2 | Quiet window (seconds) for MCDR output collection. |
+| `ws_url` | string | ws://127.0.0.1:8001/ws | WebSocket server URL. |
+| `server_name` | string | default | Unique identifier for this MCDR server. |
+| `auto_reconnect` | bool | true | Auto-reconnect on connection loss. |
+| `reconnect_interval` | float | 5.0 | Base interval (seconds) between reconnection attempts. |
 
-- `token`: Bearer token used by the HTTP API. If empty, the plugin generates one automatically on first load.
-- `timeout`: Maximum time in seconds to wait for command output.
-- `idle_timeout`: Additional quiet window in seconds for MCDR command output collection.
-- `host`: HTTP bind address.
-- `port`: HTTP listen port.
+### Configuration Notes
 
-## API
+1. **Token Synchronization**: Plugin token must match WS Server token exactly. If they differ, the WS Server will reject the connection with code 1008.
 
-### Authentication
+2. **server_name Uniqueness**: Each MCDR server connected to the same WS Server must have a unique `server_name`. Clients use this to route commands.
 
-All endpoints use Bearer token authentication:
+3. **Timeout Tuning**: Increase `timeout` if your commands take longer to execute. `idle_timeout` helps capture multi-line outputs.
 
-```http
-Authorization: Bearer <token>
-```
+## WebSocket API
 
-### `GET /health`
+The complete API is provided by [cca_client](https://github.com/Xc-Star/cca_client). Please refer to its documentation for the full API reference.
 
-Returns the plugin health status.
+### Quick Reference
 
-Example response:
-
+**Command Request:**
 ```json
 {
-  "code": 200,
-  "msg": "success",
-  "data": {
-    "status": "ok",
-    "server_running": true
-  }
+  "type": "command",
+  "request_id": "uuid-string",
+  "command": "!!MCDR plugin list",
+  "server_name": "server_1"
 }
 ```
 
-### `POST /execute`
+**Command Routing:**
+- Commands starting with `!!` → Executed as MCDR commands
+- Commands without `!!` → Executed as Minecraft server console commands
 
-Executes a command and returns captured output.
+## Troubleshooting
 
-Request body:
+### "Invalid token" errors
 
-```json
-{
-  "command": "!!MCDR plugin list"
-}
-```
+1. Ensure WS Server token is not empty
+2. Verify plugin `token` matches WS Server `token`
+3. Restart WS Server and note the new generated token
 
-### Command routing
+### Command timeout
 
-- `!!MCDR plugin list` -> executed as an MCDR command
-- `list` -> executed as a Minecraft server console command
+- Increase `timeout` in plugin config
+- Check if the Minecraft server is responsive
 
-Example success response:
+### No output captured
 
-```json
-{
-  "code": 200,
-  "msg": "success",
-  "data": {
-    "request_id": "2b0f0f34-2f0f-4d97-9e2f-123456789abc",
-    "command": "!!MCDR plugin list",
-    "command_type": "mcdr",
-    "output": [
-      "..."
-    ],
-    "output_text": "...",
-    "timed_out": false
-  }
-}
-```
-
-Example error response:
-
-```json
-{
-  "code": 401,
-  "msg": "Invalid authentication token",
-  "data": null
-}
-```
-
-## Notes
-
-- MCDR commands are captured through a custom `CommandSource` plus temporary log capture.
-- Minecraft server commands are captured from server console output by using start/end markers.
-- Minecraft server commands require the game server to be running.
-- To avoid mixed output between concurrent requests, command execution is serialized.
+- For MCDR commands: Check if `idle_timeout` is large enough
+- For MC server commands: Ensure server is running and not frozen
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+MIT License. See [LICENSE](./LICENSE) for details.
+
+## Related Links
+
+- [cca_client](https://github.com/Xc-Star/cca_client) - WS Server component
+- [MCDReforged](https://github.com/MCDReforged/MCDReforged) - MCDR framework

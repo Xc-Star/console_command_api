@@ -1,10 +1,10 @@
 {
 	"id": "console_command_api",
-	"version": "1.0.1",
+	"version": "2.0.0",
 	"name": "Console Command API",
 	"description": {
-		"en_us": "Execute console commands via HTTP API and get responses",
-		"zh_cn": "通过 HTTP API 执行控制台命令并获取响应"
+		"en_us": "Execute console commands via WebSocket and get responses (v2)",
+		"zh_cn": "通过 WebSocket 执行控制台命令并获取响应 (v2)"
 	},
 	"author": [
 		"Xc_Star"

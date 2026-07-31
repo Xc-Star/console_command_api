@@ -1,3 +1,9 @@
 console_command_api:
-  server_started: "MCDR 命令 HTTP 服务已启动: http://{0}:{1}"
-  server_stopped: "MCDR 命令 HTTP 服务已停止"
+  client_started: "WS 客户端已启动: {0}, 服务器名称: {1}"
+  client_stopped: "WS 客户端已停止"
+  connected: "已连接到 WS 服务器"
+  reconnecting: "正在重新连接 WS 服务器..."
+  connection_failed: "连接 WS 服务器失败: {0}"
+  disconnected: "已断开与 WS 服务器的连接"
+  error_no_token: "Token 未配置！请在配置文件中设置 token。"
+  error_websockets_not_installed: "websockets 库未安装！请运行: pip install websockets"

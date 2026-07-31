@@ -1,61 +1,60 @@
 """
-插件入口。
+插件入口 v2。
 
-负责加载配置、启动 HTTP 服务，以及在插件卸载时停止服务线程。
+负责加载配置、启动 WebSocket 客户端，以及在插件卸载时断开连接。
 """
 import threading
+from typing import Optional
 
 from mcdreforged.api.all import *
 
 from .collector import server_command_collector_manager
-from .config import Config, generate_token_if_empty
-from .server import set_server_context, start_server, stop_server
+from .config import Config
+from .ws_client import health_tracker, set_server_context, set_translator, start_client, stop_client
 
 PLUGIN_METADATA = ServerInterface.get_instance().as_plugin_server_interface().get_self_metadata()
 
 config = Config.get_default()
-server_thread: threading.Thread | None = None
+client_thread: Optional[threading.Thread] = None
 
 
 def tr(translation_key: str, *args, **kwargs) -> RTextMCDRTranslation:
-	"""读取插件翻译文本。"""
-	return ServerInterface.get_instance().rtr(f'{PLUGIN_METADATA.id}.{translation_key}', *args, **kwargs)
+    """读取插件翻译文本"""
+    return ServerInterface.get_instance().rtr(f'{PLUGIN_METADATA.id}.{translation_key}', *args, **kwargs)
 
 
 def on_info(server: PluginServerInterface, info: Info):
-	"""监听服务端输出，为 MC 服务端命令请求收集响应。"""
-	if info.is_from_server:
-		server_command_collector_manager.process_server_output(info.raw_content)
+    """监听服务端输出，为 MC 服务端命令请求收集响应"""
+    if info.is_from_server:
+        server_command_collector_manager.process_server_output(info.raw_content)
 
 
 def on_load(server: PluginServerInterface, prev):
-	"""加载插件并启动 HTTP 服务。"""
-	global config, server_thread
+    """加载插件并启动 WebSocket 客户端"""
+    global config, client_thread
 
-	config = server.load_config_simple(target_class=Config)
-	config = generate_token_if_empty(config)
-	server.save_config_simple(config)
+    config = server.load_config_simple(target_class=Config)
+    set_server_context(server, config)
+    set_translator(lambda key: server.rtr(f'{PLUGIN_METADATA.id}.{key}'))
 
-	set_server_context(server, config)
+    client_thread = threading.Thread(
+        target=start_client,
+        args=(config,),
+        daemon=True,
+        name='Console Command API - WS Client',
+    )
+    client_thread.start()
 
-	server_thread = threading.Thread(
-		target=start_server,
-		args=(config.host, config.port),
-		daemon=True,
-		name='Console Command API - HTTP Server',
-	)
-	server_thread.start()
-
-	server.logger.info(tr('server_started', config.host, config.port))
+    server.logger.info(tr('client_started', config.ws_url, config.server_name))
 
 
 def on_unload(server: PluginServerInterface):
-	"""卸载插件并停止 HTTP 服务。"""
-	global server_thread
+    """卸载插件并停止 WebSocket 客户端"""
+    global client_thread
 
-	stop_server()
-	if server_thread is not None and server_thread.is_alive():
-		server_thread.join(timeout=5)
-	server_thread = None
+    stop_client()
+    if client_thread is not None and client_thread.is_alive():
+        client_thread.join(timeout=5)
+    client_thread = None
 
-	server.logger.info(tr('server_stopped'))
+    server.logger.info(tr('client_stopped'))
