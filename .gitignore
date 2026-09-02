@@ -14,6 +14,7 @@ build/
 dist/
 *.egg-info/
 .eggs/
+ConsoleCommandAPI-*.mcdr
 
 # Test and coverage output
 .pytest_cache/
